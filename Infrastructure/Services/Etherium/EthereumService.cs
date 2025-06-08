@@ -4,25 +4,33 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Application.Dto;
+using Application.Options;
 using Application.ServicesImpl;
+using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.Blocks;
 using Nethereum.Web3;
+using Persistence.Repositories;
 
 namespace Infrastructure.Services.Etherium
 {
     public class EthereumService : IEthereumService
     {
         private readonly Web3 _web3;
-
-        public EthereumService(string rpcUrl)
+        private readonly ILogger<EthereumService> _logger;
+        private readonly IRepository<ExternalTransaction> _externalTransactionRepository;
+        public EthereumService(IOptions<EthereumOptions> options,ILogger<EthereumService> logger,IRepository<ExternalTransaction> externalTransactionRepository)
         {
-            _web3 = new Web3(rpcUrl);
+            _logger = logger;
+            _externalTransactionRepository = externalTransactionRepository;
+            _web3 = new Web3(options.Value.RpcUrl);
         }
 
-        public async Task<List<ExternalTransactionDto>> GetRecentTransactionAsync(int blockCount = 100)
+        public async Task<List<ExternalTransactionDto>> GetRecentTransactionAsync(int blockCount = 5)
         {
-
             IEthBlockNumber GetBlockNumberRequest = _web3.Eth.Blocks.GetBlockNumber; // IEthBlockNumber HexBigInteger'dan miras alınmış bir interface olduğu için, bu şekilde kullanabiliriz.
             var latestBlockNumber = await GetBlockNumberRequest.SendRequestAsync();
             var transactions = new List<ExternalTransactionDto>();
@@ -48,10 +56,30 @@ namespace Infrastructure.Services.Etherium
                     }
                 }
             }
-
-
-
             return transactions;
+        }
+
+        public async Task FetchAndSaveRecentTransactionsAsync(int blockCount = 5)
+        {
+            var transactions = await GetRecentTransactionAsync(blockCount);
+
+            foreach (var tx in transactions)
+            {
+                var exists = await _externalTransactionRepository.GetFilteredAsync(e => e.Hash == tx.Hash);
+
+                if (!exists.Any())
+                {
+                    await _externalTransactionRepository.AddAsync(new ExternalTransaction
+                    {
+                        From = tx.From,
+                        To = tx.To,
+                        Hash = tx.Hash,
+                        Value = tx.Value,
+                        BlockNumber = (long)tx.BlockNumber,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
         }
     }
 }

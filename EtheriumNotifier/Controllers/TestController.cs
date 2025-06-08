@@ -1,5 +1,7 @@
 ﻿using Application.ServicesImpl;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Persistence.DbContext;
 
 namespace EtheriumNotifier.Controllers
 {
@@ -9,10 +11,12 @@ namespace EtheriumNotifier.Controllers
     public class TestController : ControllerBase
     {
         private readonly IEthereumService _ethereumService;
+        private readonly DatabaseContext _databaseContext;
 
-        public TestController(IEthereumService ethereumService)
+        public TestController(IEthereumService ethereumService , DatabaseContext db)
         {
             _ethereumService = ethereumService;
+            _databaseContext = db;
         }
 
         [HttpGet("recent-transaction")]
@@ -22,5 +26,18 @@ namespace EtheriumNotifier.Controllers
             return Ok(txs);
         }
 
+        [HttpGet("fetch-and-save")]
+        public async Task<IActionResult> FetchAndSaveExternalTransactions() 
+        {
+            await _ethereumService.FetchAndSaveRecentTransactionsAsync(5);
+            return Ok("Transactions fetched and saved successfully.");
+        }
+
+        [HttpGet("all-transactions")]
+        public async Task<IActionResult> GetAllTransaction()
+        {
+            var transactions = await _databaseContext.ExternalTransactions.ToListAsync();
+            return Ok(transactions);
+        }
     }
 }

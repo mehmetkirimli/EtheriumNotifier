@@ -11,6 +11,7 @@ namespace Persistence.DbContext
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<NotificationChannel> NotificationChannels { get; set; } = null!;
         public DbSet<Domain.Entities.Transaction> Transactions { get; set; } = null!;
+        public DbSet<ExternalTransaction> ExternalTransactions { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Transaction - Hash kolonu unıque index
@@ -29,6 +30,9 @@ namespace Persistence.DbContext
                 .Property(x => x.ChannelType)
                 .HasConversion<string>();
 
+            modelBuilder.Entity<ExternalTransaction>()
+           .HasIndex(e => e.Hash)
+           .IsUnique(); // idempotency için önemli
 
             base.OnModelCreating(modelBuilder);
         }

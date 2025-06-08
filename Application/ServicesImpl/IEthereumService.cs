@@ -9,6 +9,7 @@ namespace Application.ServicesImpl
 {
     public interface IEthereumService
     {
-        Task<List<ExternalTransactionDto>> GetRecentTransactionAsync(int blockCount = 100);
+        Task<List<ExternalTransactionDto>> GetRecentTransactionAsync(int blockCount = 5);
+        Task FetchAndSaveRecentTransactionsAsync(int blockCount = 5);
     }
 }
