@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Katman Servisleri
 builder.Services.AddApplicationServices();
 builder.Services.AddDomainServices();
-builder.Services.AddPersistenceServices();
+builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddInfrastructureServices();
 
 
