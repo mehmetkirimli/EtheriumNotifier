@@ -11,5 +11,6 @@ namespace Application.ServicesImpl
     {
         Task<List<ExternalTransactionDto>> GetRecentTransactionAsync(int blockCount = 5);
         Task FetchAndSaveRecentTransactionsAsync(int blockCount = 5);
+        Task<List<ExternalTransactionDto>> GetAllSavedTransactionsAsync();
     }
 }

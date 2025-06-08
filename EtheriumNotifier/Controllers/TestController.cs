@@ -11,33 +11,41 @@ namespace EtheriumNotifier.Controllers
     public class TestController : ControllerBase
     {
         private readonly IEthereumService _ethereumService;
-        private readonly DatabaseContext _databaseContext;
 
-        public TestController(IEthereumService ethereumService , DatabaseContext db)
+        public TestController(IEthereumService ethereumService)
         {
             _ethereumService = ethereumService;
-            _databaseContext = db;
         }
 
-        [HttpGet("recent-transaction")]
-        public async Task<IActionResult> GetRecentTransaction() 
+        /// <summary>
+        /// Son N bloktaki işlemleri zincirden okur (sadece gösterim için, veri kaydetmez).
+        /// </summary>
+        [HttpGet("get-recent-transactions")]
+        public async Task<IActionResult> GetRecentTransaction([FromQuery] int blockCount = 5)
         {
-            var txs = await _ethereumService.GetRecentTransactionAsync(1);
-            return Ok(txs);
+            var transactions = await _ethereumService.GetRecentTransactionAsync(blockCount);
+            return Ok(transactions);
         }
 
-        [HttpGet("fetch-and-save")]
-        public async Task<IActionResult> FetchAndSaveExternalTransactions() 
+        /// <summary>
+        /// Zincirden işlemleri çeker ve veritabanına kayıt eder. Redis cache kontrolü yapar (idempotent).
+        /// </summary>
+        [HttpPost("fetch-and-save-transactions")]
+        public async Task<IActionResult> FetchAndSaveTransactions([FromQuery] int blockCount = 5)
         {
-            await _ethereumService.FetchAndSaveRecentTransactionsAsync(5);
+            await _ethereumService.FetchAndSaveRecentTransactionsAsync(blockCount);
             return Ok("Transactions fetched and saved successfully.");
         }
 
-        [HttpGet("all-transactions")]
-        public async Task<IActionResult> GetAllTransaction()
+        /// <summary>
+        /// Tüm kaydedilen işlemleri InMemory veritabanından getirir.
+        /// </summary>
+        [HttpGet("get-all-transactions")]
+        public async Task<IActionResult> GetAllTransactions()
         {
-            var transactions = await _databaseContext.ExternalTransactions.ToListAsync();
+            var transactions = await _ethereumService.GetAllSavedTransactionsAsync();
             return Ok(transactions);
         }
+
     }
 }

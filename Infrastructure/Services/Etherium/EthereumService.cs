@@ -71,11 +71,12 @@ namespace Infrastructure.Services.Etherium
                 //var exists = await _externalTransactionRepository.GetFilteredAsync(e => e.Hash == tx.Hash); DB'ye gidip sormak demek zaten performans kaybettirir , bu sebeple ilk önlem redis ile 2.önlem hash değerinin unıque olması ile alınıyor
 
                 // Redis üzerinden idempotency kontrolü
-                bool alreadyExists = await _redisService.HasKeyAsync(tx.Hash);
+                string redisKey = $"tx-hash:{tx.Hash}";
+                bool alreadyExists = await _redisService.HasKeyAsync(redisKey);
 
                 if (alreadyExists)
                 {
-                    _logger.LogInformation($"Transaction with hash {tx.Hash} already exists in Redis.");
+                    _logger.LogInformation($"Transaction with hash {redisKey} already exists in Redis.");
                     continue;
                 }
 
@@ -91,10 +92,24 @@ namespace Infrastructure.Services.Etherium
                 });
 
                 // Redis'e işlenmiş olarak yaz
-                await _redisService.SaveResponseAsync(tx.Hash, true);
+                await _redisService.SaveResponseAsync(redisKey, true ,TimeSpan.FromHours(2));
             }
 
             _logger.LogInformation("Fetch and save işlemi tamamlandı.");
+        }
+
+        public Task<List<ExternalTransactionDto>> GetAllSavedTransactionsAsync()
+        {
+            // InMemory veritabanından tüm ExternalTransaction kayıtlarını getirir
+            return _externalTransactionRepository.GetAllAsync()
+                .ContinueWith(task => task.Result.Select(tx => new ExternalTransactionDto
+                {
+                    From = tx.From,
+                    To = tx.To,
+                    Hash = tx.Hash,
+                    Value = tx.Value,
+                    BlockNumber = (ulong)tx.BlockNumber
+                }).ToList());
         }
     }
 }

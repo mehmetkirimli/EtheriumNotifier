@@ -1,6 +1,7 @@
 ﻿using Application.Options;
 using Application.ServicesImpl;
 using Infrastructure.Services.Etherium;
+using Infrastructure.Services.Redis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
@@ -21,6 +22,8 @@ namespace Infrastructure
             var redisConnection = $"{redisHost}:{redisPort}";
 
             services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
+
+            services.AddSingleton<IRedisService, RedisService>();
 
             return services;
         }
