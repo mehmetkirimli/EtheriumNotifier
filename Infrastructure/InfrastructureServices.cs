@@ -3,6 +3,7 @@ using Application.ServicesImpl;
 using Infrastructure.Services.Etherium;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace Infrastructure
 {
@@ -14,6 +15,12 @@ namespace Infrastructure
 
             services.AddScoped<IEthereumService, EthereumService>();
 
+            // Redis 
+            var redisHost = configuration["Redis:Host"];
+            var redisPort = configuration["Redis:Port"];
+            var redisConnection = $"{redisHost}:{redisPort}";
+
+            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
 
             return services;
         }
