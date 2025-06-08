@@ -7,7 +7,7 @@ using Application.Dto;
 
 namespace Application.ServicesImpl
 {
-    public interface IEhtereumService
+    public interface IEthereumService
     {
         Task<List<ExternalTransactionDto>> GetRecentTransactionAsync(int blockCount = 100);
     }
