@@ -1,0 +1,6 @@
+@EtheriumNotifier_HostAddress = http://localhost:5049
+
+GET {{EtheriumNotifier_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
