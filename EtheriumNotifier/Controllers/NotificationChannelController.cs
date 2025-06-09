@@ -60,7 +60,7 @@ namespace EtheriumNotifier.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetChannels([FromQuery] ChannelType channelType, [FromQuery] int userId)
+        public async Task<IActionResult> GetChannels([FromQuery] ChannelType? channelType, [FromQuery] int? userId)
         {
             var result = await _notificationChannelService.GetNotificationChannelsAsync(channelType, userId);
             return Ok(result);

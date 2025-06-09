@@ -15,7 +15,7 @@ namespace Application.ServicesImpl
         public Task<NotificationChannel> AddNotificationChannelAsync(CreateNotificationChannelRequestDto dto);
         public Task<NotificationChannel> UpdateNotificationChannelAsync(CreateNotificationChannelRequestDto dto);
         public Task<NotificationChannel> DeleteNotificationChannelAsync(Guid channelId);
-        public Task<List<NotificationChannel>> GetNotificationChannelsAsync(ChannelType channelType , int userId );
+        public Task<List<NotificationChannel>> GetNotificationChannelsAsync(ChannelType? channelType , int? userId );
         public Task<NotificationChannel> GetNotificationChannelByIdAsync(Guid channelId);
     }
 }

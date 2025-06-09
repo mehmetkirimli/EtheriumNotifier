@@ -8,6 +8,7 @@ using Application.ServicesImpl;
 using Domain.Enums;
 using Domain.Entities;
 using Persistence.Repositories;
+using System.Runtime.InteropServices;
 
 namespace Infrastructure.Services.NotificationChannel
 {
@@ -68,15 +69,26 @@ namespace Infrastructure.Services.NotificationChannel
             if (entity == null)
                 throw new KeyNotFoundException("Bildirim kanalı bulunamadı!");
 
-            await _repository.DeleteAsync((int)typeof(Domain.Entities.NotificationChannel).GetProperty("Id").GetValue(entity));
+            await _repository.DeleteAsync(channelId);
             await _repository.SaveChangesAsync();
             return entity;
         }
 
-        public async Task<List<Domain.Entities.NotificationChannel>> GetNotificationChannelsAsync(ChannelType channelType, int userId)
+        public async Task<List<Domain.Entities.NotificationChannel>> GetNotificationChannelsAsync(ChannelType? channelType, int? userId)
         {
-            var list = await _repository.GetFilteredAsync(x => x.ChannelType == channelType && x.UserId == userId);
-            return list.ToList();
+            var allData = await _repository.GetAllAsync();
+            var filtered = allData.AsEnumerable();
+
+            //channelType varsa veya userId varsa filtrele
+            if (channelType.HasValue) 
+            {
+                filtered = filtered.Where(x => x.ChannelType == channelType.Value);
+            }
+            if (userId.HasValue) 
+            {
+                filtered = filtered.Where(x => x.UserId == userId.Value);
+            }
+            return filtered.ToList();
         }
 
         public async Task<Domain.Entities.NotificationChannel> GetNotificationChannelByIdAsync(Guid channelId)
