@@ -16,7 +16,7 @@ namespace Domain.Entities
         public string BlockHash { get; set; } = null!;
         public long BlockNumber { get; set; }
         public int TransactionIndex { get; set; }
-        public bool Status { get; set; }
+        public bool TransactionStatus { get; set; }
         public DateTime Timestamp { get; set; }
     }
 }

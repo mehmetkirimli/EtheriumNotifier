@@ -4,6 +4,7 @@ using Hangfire;
 using Hangfire.MemoryStorage;
 using Infrastructure.Services.Etherium;
 using Infrastructure.Services.HangFire;
+using Infrastructure.Services.NotificationChannel;
 using Infrastructure.Services.Redis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,8 @@ namespace Infrastructure
             services.Configure<EthereumOptions>(configuration.GetSection("Ethereum"));
 
             services.AddScoped<IEthereumService, EthereumService>();
+
+            services.AddScoped<INotificationChannelService, NotificationChannelService>();
 
             // Redis için DI (Dependency Injection) 
             var redisHost = configuration["Redis:Host"];
