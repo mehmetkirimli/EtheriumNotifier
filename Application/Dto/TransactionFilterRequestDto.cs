@@ -8,10 +8,10 @@ namespace Application.Dto
 {
     public class TransactionFilterRequestDto
     {
-        public string Address { get; set; }
+        public string? Address { get; set; }
         public decimal? MinAmount { get; set; }
         public int? BlockNumber { get; set; }
-        public string TransactionHash { get; set; }
+        public string? TransactionHash { get; set; }
         public DateTime? MinDate { get; set; }
         public DateTime? MaxDate { get; set; }
         // Opsiyonel: Pagination

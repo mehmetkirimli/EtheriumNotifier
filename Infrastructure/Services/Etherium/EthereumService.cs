@@ -1,18 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
-using Application.Dto;
+﻿using Application.Dto;
 using Application.Options;
 using Application.ServicesImpl;
 using Domain.Entities;
 using Infrastructure.Services.Redis;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Nethereum.BlockchainProcessing.BlockStorage.Repositories;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.Blocks;
 using Nethereum.Web3;
@@ -107,7 +99,8 @@ namespace Infrastructure.Services.Etherium
                 });
 
                 // Redis'e işlenmiş olarak yaz
-                await _redisService.SaveResponseAsync(redisKey, true ,TimeSpan.FromHours(2));
+                await _redisService.SaveResponseAsync(redisKey, true ,TimeSpan.FromMinutes(20));
+                //await _redisService.AddHashToMinuteSetAsync(tx.TransactionHash, tx.ProcessingTime); Timeout hatası riski oluşturmasın diye yoruma aldım.
             }
 
             _logger.LogInformation("Get Transaction and Save process is succesfully .");
@@ -127,14 +120,16 @@ namespace Infrastructure.Services.Etherium
                 }).ToList());
         }
 
-        public async Task<List<Transaction>> GetFilteredTransactionsAsync(TransactionFilterRequestDto dto)
+        public async Task<List<ExternalTransactionDto>> GetFilteredTransactionsAsync(TransactionFilterRequestDto dto)
         {
             // --- Validasyon ---
+            dto.Address = dto.Address?.Trim();
+
             if (!string.IsNullOrEmpty(dto.Address) && (dto.Address.Length != 42 || !dto.Address.StartsWith("0x")))
                 throw new ArgumentException("Adres formatı geçersiz!");
 
-            if (!string.IsNullOrEmpty(dto.Hash) && (dto.Hash.Length != 66 || !dto.Hash.StartsWith("0x")))
-                throw new ArgumentException("Hash formatı geçersiz!");
+            if (!string.IsNullOrEmpty(dto.TransactionHash) && (dto.TransactionHash.Length != 66 || !dto.TransactionHash.StartsWith("0x")))
+                throw new ArgumentException("Transaction-Hash formatı geçersiz!");
 
             if (dto.MinDate.HasValue && dto.MinDate < DateTime.UtcNow.AddMonths(-2))
                 throw new ArgumentException("Min sorgulama tarihi 2 aydan eski olamaz!");
@@ -143,11 +138,11 @@ namespace Infrastructure.Services.Etherium
                 throw new ArgumentException("Tarih aralığı maksimum 15 gün olmalı!");
 
             // --- Filtreleme ---
-            var all = await _transactionRepository.GetAllAsync();
+            var all = await _externalTransactionRepository.GetAllAsync();
             var query = all.AsQueryable();
 
             if (!string.IsNullOrEmpty(dto.Address))
-                query = query.Where(x => x.FromAddress == dto.Address || x.ToAddress == dto.Address);
+                query = query.Where(x => x.From == dto.Address || x.To == dto.Address);
 
             if (dto.MinAmount.HasValue)
                 query = query.Where(x => x.Amount >= dto.MinAmount.Value);
@@ -155,25 +150,64 @@ namespace Infrastructure.Services.Etherium
             if (dto.BlockNumber.HasValue)
                 query = query.Where(x => x.BlockNumber == dto.BlockNumber.Value);
 
-            if (!string.IsNullOrEmpty(dto.Hash))
-                query = query.Where(x => x.Hash == dto.Hash);
+            if (!string.IsNullOrEmpty(dto.TransactionHash))
+                query = query.Where(x => x.TransactionHash == dto.TransactionHash);
 
             if (dto.MinDate.HasValue)
-                query = query.Where(x => x.Timestamp >= dto.MinDate.Value);
+                query = query.Where(x => x.ProcessingTime >= dto.MinDate.Value);
 
             if (dto.MaxDate.HasValue)
-                query = query.Where(x => x.Timestamp <= dto.MaxDate.Value);
+                query = query.Where(x => x.ProcessingTime <= dto.MaxDate.Value);
 
             // --- Pagination ---
             if (dto.PageNumber.HasValue && dto.PageSize.HasValue)
                 query = query.Skip((dto.PageNumber.Value - 1) * dto.PageSize.Value).Take(dto.PageSize.Value);
 
-            return query.ToList();
+
+            // Dönüşüm: Entity'den DTO'ya geçişş
+            var result = query.Select(tx => new ExternalTransactionDto
+            {
+                From = tx.From,
+                To = tx.To,
+                Amount = tx.Amount,
+                TransactionHash = tx.TransactionHash,
+                BlockNumber = tx.BlockNumber,
+                BlockHash = tx.BlockHash,
+                TransactionIndex = tx.TransactionIndex,
+                TransactionStatus = tx.TransactionStatus,
+                ProcessingTime = tx.ProcessingTime
+            }).ToList();
+
+            return result;
         }
 
+        public async Task<ExternalTransactionDto> GetTransactionByHashAsync(string hash)
+        {
+            if (string.IsNullOrEmpty(hash) || hash.Length != 66 || !hash.StartsWith("0x"))
+                throw new ArgumentException("Transaction hash formatı geçersiz!");
+
+            var all = await _externalTransactionRepository.GetAllAsync();
+            var tx = all.FirstOrDefault(x => x.TransactionHash == hash);
+
+            if (tx == null)
+                throw new KeyNotFoundException("Transaction bulunamadı!");
+
+            // DTO map
+            return new ExternalTransactionDto
+            {
+                From = tx.From,
+                To = tx.To,
+                Amount = tx.Amount,
+                TransactionHash = tx.TransactionHash,
+                BlockNumber = tx.BlockNumber,
+                BlockHash = tx.BlockHash,
+                TransactionIndex = tx.TransactionIndex,
+                TransactionStatus = tx.TransactionStatus,
+                ProcessingTime = tx.ProcessingTime
+            };
+        }
     }
 }
-
 
 /*/ Note 
 
@@ -181,8 +215,5 @@ Nethereum’un Ethereum ile RPC protokolünde çalışması için
 blok numaralarını hexadecimal formatta göndermesi gerekir.  
 
 HexBigInteger, bu sayıyı uygun formata çevirir (örneğin: "0x12a4ef" gibi)  
-
-//var exists = await _externalTransactionRepository.GetFilteredAsync(e => e.Hash == tx.Hash); 
-DB'ye gidip sormak demek zaten performans kaybettirir , bu sebeple ilk önlem redis ile 2.önlem hash değerinin unıque olması ile alınıyor
 
 */

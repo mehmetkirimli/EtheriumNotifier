@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Storage;
+﻿using System.Text.Json;
 using StackExchange.Redis;
 
 namespace Infrastructure.Services.Redis
@@ -32,6 +26,13 @@ namespace Infrastructure.Services.Redis
         {
             var value = await _redis.StringGetAsync(key);
             return value.HasValue ? JsonSerializer.Deserialize<T>(value) : default(T);
+        }
+
+        public async Task AddHashToMinuteSetAsync(string hash, DateTime dateTimeUtc)
+        {
+            // Key: Tx-Minute:2024-06-09-13:45
+            string setKey = $"Tx-Minute:{dateTimeUtc:yyyy-MM-dd-HH:mm}";
+            await _redis.SetAddAsync(setKey, hash); // StackExchange.Redis SetAdd
         }
     }
 }

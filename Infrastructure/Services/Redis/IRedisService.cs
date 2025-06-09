@@ -16,5 +16,6 @@ namespace Infrastructure.Services.Redis
         Task<bool> HasKeyAsync(string key);
         Task SaveResponseAsync(string key, object response, TimeSpan? tt1 = null);
         Task<T> GetResponseAsync<T>(string key);
+        Task AddHashToMinuteSetAsync(string hash, DateTime dateTimeUtc);
     }
 }
