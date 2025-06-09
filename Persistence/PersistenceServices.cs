@@ -14,7 +14,6 @@ namespace Persistence
 
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>)); // Generic repo
 
-
             return services;
         }
     }

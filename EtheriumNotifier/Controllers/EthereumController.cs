@@ -1,18 +1,16 @@
 ﻿using Application.ServicesImpl;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Persistence.DbContext;
 
 namespace EtheriumNotifier.Controllers
 {
 
     [ApiController]
     [Route("api/[controller]")]
-    public class TestController : ControllerBase
+    public class EthereumController : ControllerBase
     {
         private readonly IEthereumService _ethereumService;
 
-        public TestController(IEthereumService ethereumService)
+        public EthereumController(IEthereumService ethereumService)
         {
             _ethereumService = ethereumService;
         }
@@ -20,10 +18,10 @@ namespace EtheriumNotifier.Controllers
         /// <summary>
         /// Son N bloktaki işlemleri zincirden okur (sadece gösterim için, veri kaydetmez).
         /// </summary>
-        [HttpGet("get-recent-transactions")]
+        [HttpGet("fetch-transactions")]
         public async Task<IActionResult> GetRecentTransaction([FromQuery] int blockCount = 5)
         {
-            var transactions = await _ethereumService.GetRecentTransactionAsync(blockCount);
+            var transactions = await _ethereumService.FetchTransactionAsync(blockCount);
             return Ok(transactions);
         }
 
@@ -33,7 +31,7 @@ namespace EtheriumNotifier.Controllers
         [HttpPost("fetch-and-save-transactions")]
         public async Task<IActionResult> FetchAndSaveTransactions([FromQuery] int blockCount = 5)
         {
-            await _ethereumService.FetchAndSaveRecentTransactionsAsync(blockCount);
+            await _ethereumService.SaveTransactionsAsync(blockCount);
             return Ok("Transactions fetched and saved successfully.");
         }
 

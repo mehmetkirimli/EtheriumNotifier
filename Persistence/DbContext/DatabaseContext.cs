@@ -10,16 +10,18 @@ namespace Persistence.DbContext
         }
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<NotificationChannel> NotificationChannels { get; set; } = null!;
-        public DbSet<Domain.Entities.Transaction> Transactions { get; set; } = null!;
         public DbSet<ExternalTransaction> ExternalTransactions { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Transaction - Hash kolonu unıque index
             // Aynı işlemi 2.kez kaydetmemek için güvenlik önlemi bu
-            modelBuilder.Entity<Transaction>()
-           .HasIndex(x => x.Hash)
-           .IsUnique();
 
+
+            modelBuilder.Entity<ExternalTransaction>()
+           .HasIndex(e => e.TransactionHash)
+           .IsUnique(); // idempotency için önemli
 
             // Enum → string gösterim (elzem değil ama okunabilirlik için iyi)
             modelBuilder.Entity<NotificationChannel>()
@@ -30,9 +32,6 @@ namespace Persistence.DbContext
                 .Property(x => x.ChannelType)
                 .HasConversion<string>();
 
-            modelBuilder.Entity<ExternalTransaction>()
-           .HasIndex(e => e.Hash)
-           .IsUnique(); // idempotency için önemli
 
             base.OnModelCreating(modelBuilder);
         }

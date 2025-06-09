@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 using Application.Dto;
@@ -11,6 +12,7 @@ using Infrastructure.Services.Redis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nethereum.BlockchainProcessing.BlockStorage.Repositories;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.Blocks;
 using Nethereum.Web3;
@@ -32,7 +34,7 @@ namespace Infrastructure.Services.Etherium
             _redisService = redis;
         }
 
-        public async Task<List<ExternalTransactionDto>> GetRecentTransactionAsync(int blockCount = 5)
+        public async Task<List<ExternalTransactionDto>> FetchTransactionAsync(int blockCount = 10)
         {
             IEthBlockNumber GetBlockNumberRequest = _web3.Eth.Blocks.GetBlockNumber; // IEthBlockNumber HexBigInteger'dan miras alınmış bir interface olduğu için, bu şekilde kullanabiliriz.
             var latestBlockNumber = await GetBlockNumberRequest.SendRequestAsync();
@@ -41,20 +43,29 @@ namespace Infrastructure.Services.Etherium
             for(var i =0; i< blockCount; i++) 
             {
                 var blockNumber = new HexBigInteger(latestBlockNumber.Value - i);
-                var blokc = await _web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(blockNumber);
+                var block = await _web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(blockNumber);
 
-                foreach(var tx in blokc.Transactions)
+                foreach(var tx in block.Transactions)
                 {
                     if(tx.Value.Value > 0 && !string.IsNullOrEmpty(tx.To) )
                     {
+                        var receipt = await _web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(tx.TransactionHash);
+                        bool txStatus = receipt?.Status.Value == 1;                 // 0x1 ise başarılı, 0x0 ise başarısız
+
+                        var timestamp = (long)block.Timestamp.Value; 
+                        var dateTime = DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime;
 
                         transactions.Add(new ExternalTransactionDto
                         {
-                            From = tx.From,
-                            To = tx.To,
-                            Hash = tx.TransactionHash,
-                            Value = Web3.Convert.FromWei(tx.Value.Value),
-                            BlockNumber = (ulong)blockNumber.Value
+                            From = tx.From,                                         //senderAddress
+                            To = tx.To,                                             //receiverAddress
+                            Amount = Web3.Convert.FromWei(tx.Value.Value),          //amount
+                            TransactionHash = tx.TransactionHash,                   //transactionHash
+                            BlockNumber = (long)blockNumber.Value,                  //blockNumber
+                            BlockHash = block.BlockHash,                            //blockHash
+                            TransactionIndex = (int)tx.TransactionIndex.Value,      //transactionIndex
+                            TransactionStatus = txStatus,                           //tranasactionStatus 
+                            ProcessingTime = dateTime                               //processingTime
                         });
                     }
                 }
@@ -62,40 +73,44 @@ namespace Infrastructure.Services.Etherium
             return transactions;
         }
 
-        public async Task FetchAndSaveRecentTransactionsAsync(int blockCount = 5)
+        public async Task SaveTransactionsAsync(int blockCount =10)
         {
-            var transactions = await GetRecentTransactionAsync(blockCount);
+            var transactions = await FetchTransactionAsync(blockCount);
 
             foreach (var tx in transactions)
             {
-                //var exists = await _externalTransactionRepository.GetFilteredAsync(e => e.Hash == tx.Hash); DB'ye gidip sormak demek zaten performans kaybettirir , bu sebeple ilk önlem redis ile 2.önlem hash değerinin unıque olması ile alınıyor
 
                 // Redis üzerinden idempotency kontrolü
-                string redisKey = $"tx-hash:{tx.Hash}";
+                string redisKey = $"Tx-Hash => {tx.TransactionHash}";
                 bool alreadyExists = await _redisService.HasKeyAsync(redisKey);
 
                 if (alreadyExists)
                 {
-                    _logger.LogInformation($"Transaction with hash {redisKey} already exists in Redis.");
+                    _logger.LogInformation($"Transaction with hash : {redisKey} already exists in Redis.");
                     continue;
                 }
 
                 // Eğer Redis'te yoksa, veritabanına eklenilebilir
                 await _externalTransactionRepository.AddAsync(new ExternalTransaction
                 {
-                    From = tx.From,
-                    To = tx.To,
-                    Hash = tx.Hash,
-                    Value = tx.Value,
-                    BlockNumber = (long)tx.BlockNumber,
-                    CreatedAt = DateTime.UtcNow
+                    From = tx.From,                                         //senderAddress
+                    To = tx.To,                                             //receiverAddress
+                    Amount = tx.Amount,                                     //amount
+                    TransactionHash = tx.TransactionHash,                   //transactionHash
+                    BlockNumber = tx.BlockNumber,                           //blockNumber
+                    BlockHash = tx.BlockHash,                               //blockHash
+                    TransactionIndex = tx.TransactionIndex,                 //transactionIndex
+                    TransactionStatus = tx.TransactionStatus,               //tranasactionStatus 
+
+                    ProcessingTime = tx.ProcessingTime,                     //processingTime
+                    DbCreatedTime = DateTime.UtcNow
                 });
 
                 // Redis'e işlenmiş olarak yaz
                 await _redisService.SaveResponseAsync(redisKey, true ,TimeSpan.FromHours(2));
             }
 
-            _logger.LogInformation("Fetch and save işlemi tamamlandı.");
+            _logger.LogInformation("Get Transaction and Save process is succesfully .");
         }
 
         public Task<List<ExternalTransactionDto>> GetAllSavedTransactionsAsync()
@@ -106,11 +121,56 @@ namespace Infrastructure.Services.Etherium
                 {
                     From = tx.From,
                     To = tx.To,
-                    Hash = tx.Hash,
-                    Value = tx.Value,
-                    BlockNumber = (ulong)tx.BlockNumber
+                    Amount = tx.Amount,
+                    TransactionHash = tx.TransactionHash,
+                    BlockNumber = tx.BlockNumber
                 }).ToList());
         }
+
+        public async Task<List<Transaction>> GetFilteredTransactionsAsync(TransactionFilterRequestDto dto)
+        {
+            // --- Validasyon ---
+            if (!string.IsNullOrEmpty(dto.Address) && (dto.Address.Length != 42 || !dto.Address.StartsWith("0x")))
+                throw new ArgumentException("Adres formatı geçersiz!");
+
+            if (!string.IsNullOrEmpty(dto.Hash) && (dto.Hash.Length != 66 || !dto.Hash.StartsWith("0x")))
+                throw new ArgumentException("Hash formatı geçersiz!");
+
+            if (dto.MinDate.HasValue && dto.MinDate < DateTime.UtcNow.AddMonths(-2))
+                throw new ArgumentException("Min sorgulama tarihi 2 aydan eski olamaz!");
+
+            if (dto.MinDate.HasValue && dto.MaxDate.HasValue && (dto.MaxDate - dto.MinDate).Value.TotalDays > 15)
+                throw new ArgumentException("Tarih aralığı maksimum 15 gün olmalı!");
+
+            // --- Filtreleme ---
+            var all = await _transactionRepository.GetAllAsync();
+            var query = all.AsQueryable();
+
+            if (!string.IsNullOrEmpty(dto.Address))
+                query = query.Where(x => x.FromAddress == dto.Address || x.ToAddress == dto.Address);
+
+            if (dto.MinAmount.HasValue)
+                query = query.Where(x => x.Amount >= dto.MinAmount.Value);
+
+            if (dto.BlockNumber.HasValue)
+                query = query.Where(x => x.BlockNumber == dto.BlockNumber.Value);
+
+            if (!string.IsNullOrEmpty(dto.Hash))
+                query = query.Where(x => x.Hash == dto.Hash);
+
+            if (dto.MinDate.HasValue)
+                query = query.Where(x => x.Timestamp >= dto.MinDate.Value);
+
+            if (dto.MaxDate.HasValue)
+                query = query.Where(x => x.Timestamp <= dto.MaxDate.Value);
+
+            // --- Pagination ---
+            if (dto.PageNumber.HasValue && dto.PageSize.HasValue)
+                query = query.Skip((dto.PageNumber.Value - 1) * dto.PageSize.Value).Take(dto.PageSize.Value);
+
+            return query.ToList();
+        }
+
     }
 }
 
@@ -121,5 +181,8 @@ Nethereum’un Ethereum ile RPC protokolünde çalışması için
 blok numaralarını hexadecimal formatta göndermesi gerekir.  
 
 HexBigInteger, bu sayıyı uygun formata çevirir (örneğin: "0x12a4ef" gibi)  
+
+//var exists = await _externalTransactionRepository.GetFilteredAsync(e => e.Hash == tx.Hash); 
+DB'ye gidip sormak demek zaten performans kaybettirir , bu sebeple ilk önlem redis ile 2.önlem hash değerinin unıque olması ile alınıyor
 
 */

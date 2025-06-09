@@ -4,21 +4,29 @@ using Hangfire;
 using Infrastructure;
 using Infrastructure.Services.HangFire;
 using Persistence;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-// Katman Servisleri
+// Katman Servisleri  
 builder.Services.AddApplicationServices();
 builder.Services.AddDomainServices();
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+// Serilog  
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+);
 
-// Controller 
+
+// Controller  
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-// Swagger/OpenAPI
+
+// Swagger/OpenAPI  
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
@@ -31,11 +39,11 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Hangfire  
 app.UseHangfireDashboard("/hangfire");
-
 HangfireJobRegistration.RegisterJobs();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline.  
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
