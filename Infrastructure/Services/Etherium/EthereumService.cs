@@ -73,7 +73,7 @@ namespace Infrastructure.Services.Etherium
             {
 
                 // Redis üzerinden idempotency kontrolü
-                string redisKey = $"Tx-Hash => {tx.TransactionHash}";
+                string redisKey = $"Tx-Hash:{tx.TransactionHash}";
                 bool alreadyExists = await _redisService.HasKeyAsync(redisKey);
 
                 if (alreadyExists)
