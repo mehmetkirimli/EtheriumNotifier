@@ -1,6 +1,9 @@
 ﻿using Application.Options;
 using Application.ServicesImpl;
+using Hangfire;
+using Hangfire.MemoryStorage;
 using Infrastructure.Services.Etherium;
+using Infrastructure.Services.HangFire;
 using Infrastructure.Services.Redis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,14 +19,25 @@ namespace Infrastructure
 
             services.AddScoped<IEthereumService, EthereumService>();
 
-            // Redis 
+            // Redis için DI (Dependency Injection) 
             var redisHost = configuration["Redis:Host"];
             var redisPort = configuration["Redis:Port"];
             var redisConnection = $"{redisHost}:{redisPort}";
-
             services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
-
             services.AddSingleton<IRedisService, RedisService>();
+
+
+            // Hangfire
+            services.AddHangfire(config =>
+            {
+                config.UseSimpleAssemblyNameTypeSerializer();
+                config.UseRecommendedSerializerSettings();
+                config.UseMemoryStorage();
+            });
+            services.AddHangfireServer();
+
+            services.AddScoped<TransactionMonitorJob>();
+
 
             return services;
         }

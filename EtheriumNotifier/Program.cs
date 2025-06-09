@@ -1,6 +1,8 @@
 using Application;
 using Domain;
+using Hangfire;
 using Infrastructure;
+using Infrastructure.Services.HangFire;
 using Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +30,10 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+app.UseHangfireDashboard("/hangfire");
+
+HangfireJobRegistration.RegisterJobs();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
