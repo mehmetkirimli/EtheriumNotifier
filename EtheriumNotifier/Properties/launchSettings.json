@@ -13,7 +13,7 @@
         "http": {
             "commandName": "Project",
             "environmentVariables": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "ASPNETCORE_ENVIRONMENT": "Staging"
             },
             "dotnetRunMessages": true,
             "applicationUrl": "http://localhost:5049"
@@ -21,7 +21,7 @@
         "https": {
             "commandName": "Project",
             "environmentVariables": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "ASPNETCORE_ENVIRONMENT": "Staging"
             },
             "dotnetRunMessages": true,
             "applicationUrl": "https://localhost:7237;http://localhost:5049"

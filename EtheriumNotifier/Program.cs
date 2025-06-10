@@ -8,7 +8,15 @@ using Infrastructure.Services.Seed;
 using Persistence;
 using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+
+var options = new WebApplicationOptions
+{
+    Args = args,
+    EnvironmentName = Environments.Development,
+    ContentRootPath = Directory.GetCurrentDirectory()
+};
+var builder = WebApplication.CreateBuilder(options);
+
 
 // Katman Servisleri  
 builder.Services.AddApplicationServices();
