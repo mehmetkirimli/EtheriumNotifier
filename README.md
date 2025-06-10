@@ -79,3 +79,6 @@ Veya doğrudan `EthereumNotifier.exe` çalıştırın.
 - **GET** `/api/notificationlog` – Bildirim geçmişi listele (query: userId, channels[], fromDate, toDate)
 
 
+Bu README, projenin tüm temel ve ileri seviye özelliklerini, kurulumu ve kullanımını kapsamlı şekilde açıklar.  
+Sürdürmesi ve genişletmesi kolay, SOLID prensiplerine uygun bir mimari üzerine inşa edilmiştir.
+
