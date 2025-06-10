@@ -76,7 +76,7 @@ namespace Infrastructure.Services.Notification
             };
 
             await _notificationRepository.AddAsync(log);
-            _logger.LogInformation("Get Transaction and Save process is succesfully .");
+            _logger.LogInformation("The Notification was succesfully created.");
             Console.WriteLine($"[BİLDİRİM] => [Message]: {log.Message} => [Kanal]:{channel.ChannelType.ToString()} => [UserId]:{log.UserId} ");
         }
 

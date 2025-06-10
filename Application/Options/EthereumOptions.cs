@@ -8,6 +8,8 @@ namespace Application.Options
 {
     public class EthereumOptions
     {
-        public string RpcUrl { get; set; }
+        //public string RpcUrl { get; set; }
+
+        public List<string> RpcUrls { get; set; } = new List<string>();
     }
 }

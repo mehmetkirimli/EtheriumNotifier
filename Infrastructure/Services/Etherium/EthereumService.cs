@@ -14,24 +14,28 @@ namespace Infrastructure.Services.Etherium
 {
     public class EthereumService : IEthereumService
     {
-        private readonly Web3 _web3;
+        //private readonly Web3 _web3;
+        private readonly IWeb3Factory _web3Factory;
         private readonly ILogger<EthereumService> _logger;
         private readonly IRepository<ExternalTransaction> _externalTransactionRepository;
         private readonly IRepository<Domain.Entities.NotificationChannel> _notificationChannelRepository;
         private readonly IRedisService _redisService;
         private readonly INotificationService _notificationService;
-        public EthereumService(IOptions<EthereumOptions> options, ILogger<EthereumService> logger, IRepository<ExternalTransaction> externalTransactionRepository, IRedisService redis, INotificationService notificationService, IRepository<Domain.Entities.NotificationChannel> notificationChannelRepository)
+        public EthereumService(IOptions<EthereumOptions> options, ILogger<EthereumService> logger, IRepository<ExternalTransaction> externalTransactionRepository, IRedisService redis, INotificationService notificationService, IRepository<Domain.Entities.NotificationChannel> notificationChannelRepository, IWeb3Factory web3Factory)
         {
             _logger = logger;
             _externalTransactionRepository = externalTransactionRepository;
             _notificationChannelRepository = notificationChannelRepository;
-            _web3 = new Web3(options.Value.RpcUrl);
+            //_web3 = new Web3(options.Value.RpcUrl);
             _redisService = redis;
             _notificationService = notificationService;
+            _web3Factory = web3Factory;
         }
 
         public async Task<List<ExternalTransactionDto>> FetchTransactionAsync(int blockCount = 10)
         {
+            var _web3 = await _web3Factory.GetWorkingWeb3Async();
+
             IEthBlockNumber GetBlockNumberRequest = _web3.Eth.Blocks.GetBlockNumber; // IEthBlockNumber HexBigInteger'dan miras alınmış bir interface olduğu için, bu şekilde kullanabiliriz.
             var latestBlockNumber = await GetBlockNumberRequest.SendRequestAsync();
             var transactions = new List<ExternalTransactionDto>();

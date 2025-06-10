@@ -26,6 +26,7 @@ namespace Infrastructure
             services.AddScoped<IEthereumService, EthereumService>();
             services.AddScoped<INotificationChannelService, NotificationChannelService>();
             services.AddScoped<INotificationService,NotificationService>();
+            services.AddScoped<IWeb3Factory, Web3Factory>();
             services.AddScoped<ChannelSeeder>();
 
             // Redis için DI (Dependency Injection) 
