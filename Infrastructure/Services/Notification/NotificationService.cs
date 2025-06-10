@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Application.Dto;
 using Application.Options;
 using Application.ServicesImpl;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Options;
 using Persistence.Repositories;
 
@@ -15,12 +17,44 @@ namespace Infrastructure.Services.Notification
     {
         private readonly IRepository<Domain.Entities.Notification> _notificationRepository;
         private readonly decimal _minEthAmount;
+        private readonly IMapper _mapper;
 
-        public NotificationService(IRepository<Domain.Entities.Notification> notificationRepository, IOptions<NotificationOptions> options)
+        public NotificationService(IRepository<Domain.Entities.Notification> notificationRepository, IOptions<NotificationOptions> options , IMapper mapper)
         {
             _notificationRepository = notificationRepository;
             _minEthAmount = options.Value.MinEthAmount;
+            _mapper = mapper;
+        }
 
+        public async Task<List<NotificationLogDto>> GetNotificationLogsAsync(NotificationLogFilterRequestDto dto)
+        {
+            if(dto.FromDate.HasValue && dto.ToDate.HasValue) 
+            { 
+                if((dto.ToDate - dto.FromDate).Value.TotalDays > 30) 
+                { 
+                    throw new ArgumentException("Tarih aralığı maksimum 30 gün olmalıdır!");
+                }
+            }
+
+            var all = await _notificationRepository.GetAllAsync();
+            var query = all.AsQueryable();
+
+            if (dto.UserId.HasValue)
+                query = query.Where(x => x.UserId == dto.UserId.Value);
+
+            if (dto.Channels != null && dto.Channels.Any())
+                query = query.Where(x => dto.Channels.Contains(x.ChannelType));
+
+            if (dto.FromDate.HasValue)
+                query = query.Where(x => x.SentAt >= dto.FromDate.Value);
+
+            if (dto.ToDate.HasValue)
+                query = query.Where(x => x.SentAt <= dto.ToDate.Value);
+
+            var filteredEntities = query.OrderByDescending(x => x.SentAt).ToList();
+            var result = _mapper.Map<List<NotificationLogDto>>(filteredEntities);
+
+            return result;
         }
 
         public async Task LogNotificationAsync(ExternalTransactionDto tx, Domain.Entities.NotificationChannel channel)

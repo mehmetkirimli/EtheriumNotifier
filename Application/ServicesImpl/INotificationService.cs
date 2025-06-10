@@ -12,5 +12,6 @@ namespace Application.ServicesImpl
     {
         Task LogNotificationAsync(ExternalTransactionDto tx, NotificationChannel channel);
         Task SimulateNotificationsForTransactionsAsync(List<ExternalTransactionDto> transactions, List<NotificationChannel> channels);
+        Task<List<NotificationLogDto>> GetNotificationLogsAsync(NotificationLogFilterRequestDto dto);
     }
 }

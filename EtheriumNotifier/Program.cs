@@ -1,10 +1,11 @@
 using Application;
+using Application.Mapper;
 using Domain;
 using Hangfire;
 using Infrastructure;
 using Infrastructure.Services.HangFire;
+using Infrastructure.Services.Seed;
 using Persistence;
-using Persistence.Seed;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,9 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Services(services)
     .Enrich.FromLogContext()
 );
+
+//AutoMapper
+builder.Services.AddAutoMapper(typeof(Profiles).Assembly);
 
 // Controller  
 builder.Services.AddControllers();

@@ -7,9 +7,9 @@ using Infrastructure.Services.HangFire;
 using Infrastructure.Services.Notification;
 using Infrastructure.Services.NotificationChannel;
 using Infrastructure.Services.Redis;
+using Infrastructure.Services.Seed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Persistence.Seed;
 using StackExchange.Redis;
 
 namespace Infrastructure

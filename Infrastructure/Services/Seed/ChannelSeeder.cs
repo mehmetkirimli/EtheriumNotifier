@@ -9,7 +9,7 @@ using Domain.Entities;
 using Domain.Enums;
 using Persistence.Repositories;
 
-namespace Persistence.Seed
+namespace Infrastructure.Services.Seed
 {
     public class ChannelSeeder
     {
