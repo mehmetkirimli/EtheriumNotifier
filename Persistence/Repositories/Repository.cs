@@ -26,7 +26,7 @@ namespace Persistence.Repositories
         {
             await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
-            Log.Information($"Entity of type {typeof(T).Name} added successfully.");
+            //Log.Information($"Entity of type {typeof(T).Name} added successfully.");
         }
         public async Task UpdateAsync(T entity)
         {

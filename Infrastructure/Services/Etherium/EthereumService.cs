@@ -105,7 +105,7 @@ namespace Infrastructure.Services.Etherium
                 savedData.Add(tx);
             }
 
-            _logger.LogInformation("Get Transaction and Save process is succesfully .");
+            _logger.LogInformation($"Get Transaction and Save process is succesfully . We recorded {savedData.Count} pieces of data ");
             return savedData;
         }
 

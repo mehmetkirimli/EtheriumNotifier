@@ -7,7 +7,9 @@ using Application.Dto;
 using Application.Options;
 using Application.ServicesImpl;
 using AutoMapper;
+using Infrastructure.Services.Etherium;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Persistence.Repositories;
 
@@ -18,12 +20,14 @@ namespace Infrastructure.Services.Notification
         private readonly IRepository<Domain.Entities.Notification> _notificationRepository;
         private readonly decimal _minEthAmount;
         private readonly IMapper _mapper;
+        private readonly ILogger<Domain.Entities.Notification> _logger;
 
-        public NotificationService(IRepository<Domain.Entities.Notification> notificationRepository, IOptions<NotificationOptions> options , IMapper mapper)
+        public NotificationService(IRepository<Domain.Entities.Notification> notificationRepository, IOptions<NotificationOptions> options , IMapper mapper, ILogger<Domain.Entities.Notification> logger)
         {
             _notificationRepository = notificationRepository;
             _minEthAmount = options.Value.MinEthAmount;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<List<NotificationLogDto>> GetNotificationLogsAsync(NotificationLogFilterRequestDto dto)
@@ -72,6 +76,7 @@ namespace Infrastructure.Services.Notification
             };
 
             await _notificationRepository.AddAsync(log);
+            _logger.LogInformation("Get Transaction and Save process is succesfully .");
             Console.WriteLine($"[BİLDİRİM] => [Message]: {log.Message} => [Kanal]:{channel.ChannelType.ToString()} => [UserId]:{log.UserId} ");
         }
 
