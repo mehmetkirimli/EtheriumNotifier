@@ -30,10 +30,18 @@ namespace Infrastructure
             services.AddScoped<ChannelSeeder>();
 
             // Redis için DI (Dependency Injection) 
-            var redisHost = configuration["Redis:Host"];
-            var redisPort = configuration["Redis:Port"];
-            var redisConnection = $"{redisHost}:{redisPort}";
-            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
+
+            var redisConfig = configuration.GetSection("Redis");
+
+            var options = new ConfigurationOptions
+            {
+                EndPoints = { $"{redisConfig["Host"]}:{redisConfig.GetValue<int>("Port")}" },
+                ConnectTimeout = redisConfig.GetValue<int>("ConnectTimeout", 15000),
+                SyncTimeout = redisConfig.GetValue<int>("SyncTimeout", 15000),
+                AbortOnConnectFail = false
+            };
+
+            var redis = ConnectionMultiplexer.Connect(options);
             services.AddSingleton<IRedisService, RedisService>();
 
 
