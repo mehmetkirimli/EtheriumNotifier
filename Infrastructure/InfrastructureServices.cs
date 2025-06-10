@@ -42,6 +42,7 @@ namespace Infrastructure
             };
 
             var redis = ConnectionMultiplexer.Connect(options);
+            services.AddSingleton<IConnectionMultiplexer>(redis);
             services.AddSingleton<IRedisService, RedisService>();
 
 
