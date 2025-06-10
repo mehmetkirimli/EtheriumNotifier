@@ -9,6 +9,7 @@ using Infrastructure.Services.NotificationChannel;
 using Infrastructure.Services.Redis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Persistence.Seed;
 using StackExchange.Redis;
 
 namespace Infrastructure
@@ -17,13 +18,15 @@ namespace Infrastructure
     {
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
+            //Options
             services.Configure<EthereumOptions>(configuration.GetSection("Ethereum"));
+            services.Configure<NotificationOptions>(configuration.GetSection("Notification"));
 
+            //Services
             services.AddScoped<IEthereumService, EthereumService>();
-
             services.AddScoped<INotificationChannelService, NotificationChannelService>();
-
             services.AddScoped<INotificationService,NotificationService>();
+            services.AddScoped<ChannelSeeder>();
 
             // Redis için DI (Dependency Injection) 
             var redisHost = configuration["Redis:Host"];
@@ -41,9 +44,7 @@ namespace Infrastructure
                 config.UseMemoryStorage();
             });
             services.AddHangfireServer();
-
             services.AddScoped<TransactionMonitorJob>();
-
 
             return services;
         }

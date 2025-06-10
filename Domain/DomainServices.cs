@@ -6,9 +6,7 @@ namespace Domain
     {
         public static IServiceCollection AddDomainServices(this IServiceCollection services)
         {
-
             return services;
-
         }
     }
 }

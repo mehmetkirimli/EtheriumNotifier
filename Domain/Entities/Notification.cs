@@ -19,7 +19,7 @@ namespace Domain.Entities
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
         public string TransactionHash { get; set; }
         public bool IsSuccess { get; set; }
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; }
     }
 
     /*/

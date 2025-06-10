@@ -11,9 +11,7 @@ namespace Persistence
         public static IServiceCollection AddPersistenceServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<DatabaseContext>(options => options.UseInMemoryDatabase("EthereumDb"));
-
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>)); // Generic repo
-
             return services;
         }
     }

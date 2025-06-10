@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Application.Dto;
+using Application.Options;
 using Application.ServicesImpl;
+using Microsoft.Extensions.Options;
 using Persistence.Repositories;
 
 namespace Infrastructure.Services.Notification
@@ -12,12 +14,13 @@ namespace Infrastructure.Services.Notification
     public class NotificationService : INotificationService
     {
         private readonly IRepository<Domain.Entities.Notification> _notificationRepository;
-        private readonly IRepository<Domain.Entities.NotificationChannel> _notificationChannelRepository;
+        private readonly decimal _minEthAmount;
 
-        public NotificationService(IRepository<Domain.Entities.Notification> notificationRepository, IRepository<Domain.Entities.NotificationChannel> notificationChannelRepository)
+        public NotificationService(IRepository<Domain.Entities.Notification> notificationRepository, IOptions<NotificationOptions> options)
         {
             _notificationRepository = notificationRepository;
-            _notificationChannelRepository = notificationChannelRepository;
+            _minEthAmount = options.Value.MinEthAmount;
+
         }
 
         public async Task LogNotificationAsync(ExternalTransactionDto tx, Domain.Entities.NotificationChannel channel)
@@ -31,17 +34,22 @@ namespace Infrastructure.Services.Notification
                 SentAt = DateTime.UtcNow,
                 TransactionHash = tx.TransactionHash,
                 IsSuccess = true,
-                ErrorMessage = null
+                ErrorMessage = "-"
             };
 
             await _notificationRepository.AddAsync(log);
-            Console.WriteLine($"[BİLDİRİM]: Kanal:{channel.ChannelType.ToString()}, Tx:{tx.TransactionHash} , Message: {log.Message}");
+            Console.WriteLine($"[BİLDİRİM] => [Message]: {log.Message} => [Kanal]:{channel.ChannelType.ToString()} => [UserId]:{log.UserId} ");
         }
 
         public async Task SimulateNotificationsForTransactionsAsync(List<ExternalTransactionDto> transactions, List<Domain.Entities.NotificationChannel> channels)
         {
             foreach (var tx in transactions)
             {
+                if(tx.Amount < _minEthAmount)
+                {
+                    continue; // Minimum ETH miktarını karşılamayan işlemleri atla
+                }
+
                 foreach (var channel in channels)
                 {
                     if (channel.WatchedAddress == tx.To || channel.WatchedAddress == tx.From)

@@ -4,6 +4,7 @@ using Hangfire;
 using Infrastructure;
 using Infrastructure.Services.HangFire;
 using Persistence;
+using Persistence.Seed;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,7 +21,6 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Services(services)
     .Enrich.FromLogContext()
 );
-
 
 // Controller  
 builder.Services.AddControllers();
@@ -39,6 +39,14 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+#region Seeder Baþlangýçta Çalýþsýn Örnek NotificationChannel oluþsun
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<ChannelSeeder>();
+    await seeder.SeedAsync();
+}
+#endregion
+
 // Hangfire  
 app.UseHangfireDashboard("/hangfire");
 HangfireJobRegistration.RegisterJobs();
@@ -51,9 +59,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
