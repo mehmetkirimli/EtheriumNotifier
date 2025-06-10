@@ -42,4 +42,40 @@ Gerekli Bağlantı Stringi
 Redis Desktop Manager ile de bu ayarlamaları kolayca yapabilmek için Gerekli URL bağlantısını paylaşıyorum . Buradan AnotherRedisDesktopManager 1.7.7 versiyonunu açıp UI kısmına erişebilirsiniz.
 https://github.com/qishibo/AnotherRedisDesktopManager/releases
 
+# Teknolojiler
+.NET 9.0
+Nethereum.Web3
+Entity Framework Core (InMemory)
+StackExchange.Redis
+Hangfire (MemoryStorage)
+Serilog
+Swagger
+AutoMapper
+
+
+# Başlangıç için : 
+Redis'i başlatın
+Uygulamayı klonlayıp açın . VisualStudio üzerinden .sln dosyasını kullanın.
+Veya doğrudan `EthereumNotifier.exe` çalıştırın.
+
+**Hangfire Dashboard & Swagger**  
+- `http://localhost:5000/hangfire`  
+- `http://localhost:5000/swagger`
+
+## API Endpoints
+
+### Transaction
+- **GET** `/api/transaction/filter` – Dinamik filtre & pagination  
+- **GET** `/api/transaction/by-hash/{hash}` – Tekil transaction  
+- **GET** `/api/transaction/all` – Tüm kaydedilmiş transactionlar
+
+### Notification Channel
+- **POST** `/api/notificationchannel` – Yeni kanal oluştur  
+- **GET** `/api/notificationchannel` – Kanal listele (query: userId, channelType)  
+- **PUT** `/api/notificationchannel` – Kanal güncelle  
+- **DELETE** `/api/notificationchannel/{id}` – Kanal sil
+
+### Notification Log
+- **GET** `/api/notificationlog` – Bildirim geçmişi listele (query: userId, channels[], fromDate, toDate)
+
 
