@@ -23,7 +23,10 @@ namespace Infrastructure.Services.HangFire
         {
             try
             {
-                await _ethereumService.SaveTransactionsAsync();
+                var newTransactions = await _ethereumService.SaveTransactionsAsync();
+                if (newTransactions.Any()) {
+                    await _ethereumService.NotifyAllAsync(newTransactions);
+                }
             }
             catch (Exception ex)
             {

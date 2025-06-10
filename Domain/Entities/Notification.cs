@@ -17,5 +17,14 @@ namespace Domain.Entities
         public string Target { get; set; } = null!;
         public string Message { get; set; } = null!;
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
+        public string TransactionHash { get; set; }
+        public bool IsSuccess { get; set; }
+        public string ErrorMessage { get; set; }
     }
+
+    /*/
+     * Note: Bir transaction kaydedildiği vakit
+     * Notification Kanallarına Bildirim Gönderilecek (Notification Tipinde)
+     * Notification entity'si ile log kaydı oluşturucaz . 
+     */
 }

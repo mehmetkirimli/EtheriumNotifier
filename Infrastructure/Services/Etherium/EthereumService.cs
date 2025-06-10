@@ -17,13 +17,17 @@ namespace Infrastructure.Services.Etherium
         private readonly Web3 _web3;
         private readonly ILogger<EthereumService> _logger;
         private readonly IRepository<ExternalTransaction> _externalTransactionRepository;
+        private readonly IRepository<Domain.Entities.NotificationChannel> _notificationChannelRepository;
         private readonly IRedisService _redisService;
-        public EthereumService(IOptions<EthereumOptions> options,ILogger<EthereumService> logger,IRepository<ExternalTransaction> externalTransactionRepository , IRedisService redis)
+        private readonly INotificationService _notificationService;
+        public EthereumService(IOptions<EthereumOptions> options, ILogger<EthereumService> logger, IRepository<ExternalTransaction> externalTransactionRepository, IRedisService redis, INotificationService notificationService, IRepository<Domain.Entities.NotificationChannel> notificationChannelRepository)
         {
             _logger = logger;
             _externalTransactionRepository = externalTransactionRepository;
+            _notificationChannelRepository = notificationChannelRepository;
             _web3 = new Web3(options.Value.RpcUrl);
             _redisService = redis;
+            _notificationService = notificationService;
         }
 
         public async Task<List<ExternalTransactionDto>> FetchTransactionAsync(int blockCount = 10)
@@ -32,19 +36,19 @@ namespace Infrastructure.Services.Etherium
             var latestBlockNumber = await GetBlockNumberRequest.SendRequestAsync();
             var transactions = new List<ExternalTransactionDto>();
 
-            for(var i =0; i< blockCount; i++) 
+            for (var i = 0; i < blockCount; i++)
             {
                 var blockNumber = new HexBigInteger(latestBlockNumber.Value - i);
                 var block = await _web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(blockNumber);
 
-                foreach(var tx in block.Transactions)
+                foreach (var tx in block.Transactions)
                 {
-                    if(tx.Value.Value > 0 && !string.IsNullOrEmpty(tx.To) )
+                    if (tx.Value.Value > 0 && !string.IsNullOrEmpty(tx.To))
                     {
                         var receipt = await _web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(tx.TransactionHash);
                         bool txStatus = receipt?.Status.Value == 1;                 // 0x1 ise başarılı, 0x0 ise başarısız
 
-                        var timestamp = (long)block.Timestamp.Value; 
+                        var timestamp = (long)block.Timestamp.Value;
                         var dateTime = DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime;
 
                         transactions.Add(new ExternalTransactionDto
@@ -65,14 +69,13 @@ namespace Infrastructure.Services.Etherium
             return transactions;
         }
 
-        public async Task SaveTransactionsAsync(int blockCount =10)
+        public async Task<List<ExternalTransactionDto>> SaveTransactionsAsync(int blockCount = 10)
         {
             var transactions = await FetchTransactionAsync(blockCount);
+            var savedData = new List<ExternalTransactionDto>();
 
             foreach (var tx in transactions)
             {
-
-                // Redis üzerinden idempotency kontrolü
                 string redisKey = $"Tx-Hash:{tx.TransactionHash}";
                 bool alreadyExists = await _redisService.HasKeyAsync(redisKey);
 
@@ -98,12 +101,12 @@ namespace Infrastructure.Services.Etherium
                     DbCreatedTime = DateTime.UtcNow
                 });
 
-                // Redis'e işlenmiş olarak yaz
-                await _redisService.SaveResponseAsync(redisKey, true ,TimeSpan.FromMinutes(20));
-                //await _redisService.AddHashToMinuteSetAsync(tx.TransactionHash, tx.ProcessingTime); Timeout hatası riski oluşturmasın diye yoruma aldım.
+                await _redisService.SaveResponseAsync(redisKey, true, TimeSpan.FromMinutes(20));
+                savedData.Add(tx);
             }
 
             _logger.LogInformation("Get Transaction and Save process is succesfully .");
+            return savedData;
         }
 
         public Task<List<ExternalTransactionDto>> GetAllSavedTransactionsAsync()
@@ -205,6 +208,12 @@ namespace Infrastructure.Services.Etherium
                 TransactionStatus = tx.TransactionStatus,
                 ProcessingTime = tx.ProcessingTime
             };
+        }
+
+        public async Task NotifyAllAsync(List<ExternalTransactionDto> transactions)
+        {
+            var channels = await _notificationChannelRepository.GetAllAsync();
+            await _notificationService.SimulateNotificationsForTransactionsAsync(transactions, channels);
         }
     }
 }
