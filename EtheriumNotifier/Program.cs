@@ -17,6 +17,7 @@ var options = new WebApplicationOptions
 };
 var builder = WebApplication.CreateBuilder(options);
 
+builder.WebHost.UseUrls("http://0.0.0.0:80");
 
 // Katman Servisleri  
 builder.Services.AddApplicationServices();
