@@ -36,10 +36,13 @@ namespace Infrastructure
             var options = new ConfigurationOptions
             {
                 EndPoints = { $"{redisConfig["Host"]}:{redisConfig.GetValue<int>("Port")}" },
-                ConnectTimeout = redisConfig.GetValue<int>("ConnectTimeout", 15000),
-                SyncTimeout = redisConfig.GetValue<int>("SyncTimeout", 15000),
-                AbortOnConnectFail = false
+                ConnectTimeout = 15000,
+                SyncTimeout = 15000,
+                AbortOnConnectFail = false,
+                ConnectRetry = 5
             };
+
+            Console.WriteLine($"Redis config host: {redisConfig["Host"]}");
 
             var redis = ConnectionMultiplexer.Connect(options);
             services.AddSingleton<IConnectionMultiplexer>(redis);

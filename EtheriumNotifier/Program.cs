@@ -9,10 +9,11 @@ using Persistence;
 using Serilog;
 
 
+var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 var options = new WebApplicationOptions
 {
     Args = args,
-    EnvironmentName = Environments.Development,
+    EnvironmentName = environmentName,
     ContentRootPath = Directory.GetCurrentDirectory()
 };
 var builder = WebApplication.CreateBuilder(options);
@@ -23,6 +24,8 @@ if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true" 
 {
     builder.WebHost.UseUrls("http://0.0.0.0:80");
 }
+Console.WriteLine($"Loaded environment: {builder.Environment.EnvironmentName}");
+
 
 // Katman Servisleri  
 builder.Services.AddApplicationServices();
@@ -56,6 +59,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
 
 #region Seeder Baþlangýçta Çalýþsýn Örnek NotificationChannel oluþsun
 using (var scope = app.Services.CreateScope())
