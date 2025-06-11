@@ -1,4 +1,4 @@
-# 🚀 EtheriumNotifier
+# EtheriumNotifier
 
 > **Ethereum ağındaki işlemleri Hangfire ile periyodik takip eden,  
 Redis & In-Memory DB ile idempotency ve cache yöneten,  
@@ -6,35 +6,35 @@ bildirim kanallarına simülasyon bildirimleri gönderen modüler bir .NET uygul
 
 ---
 
-## 🛠️ Özellikler
+## Özellikler
 
-### 🔸 Transaction Okuma & Kaydetme
+### Transaction Okuma & Kaydetme
 - Hangfire ile her dakika tetiklenen job, Nethereum ile son N bloktan transferleri çeker ve In-Memory veritabanına kaydeder.
 
-### 🔸 Idempotency & Cache (Redis)
+### Idempotency & Cache (Redis)
 - Redis ile transaction hash’leri hem tekil key (Tx-Hash:{hash}), hem dakika bazlı set (Tx-Minute:{yyyy-MM-dd-HH:mm}) olarak saklanır.
 - Aynı hash ikinci kez işlenmez.
 
-### 🔸 Notification Channel Yönetimi
+### Notification Channel Yönetimi
 - CRUD endpoint’leri ile kullanıcı bazlı bildirim kanalları oluşturma/güncelleme/silme/listeleme.
 - Her kullanıcı-tip kombinasyonu için tekil kayıt garantisi.
 
-### 🔸 Bildirim Simülasyonu & Log
+### Bildirim Simülasyonu & Log
 - `appsettings.json` üzerinden gelen MinEthAmount (ör: 0.25 ETH) eşik değerine göre, başarılı ve minimum tutar üstündeki işlemler bildirilir.
 - Simülasyon: Console çıktısı ve Notification entity’sine log kaydı.
 
-### 🔸 Notification Log Listeleme
+### Notification Log Listeleme
 - `/api/notificationlog` endpoint’i ile userId, kanal tipi, tarih aralığı (max 30 gün) filtreleriyle geçmiş bildirimler sorgulanabilir.
 
-### 🔸 Filtreleme & Pagination
+### Filtreleme & Pagination
 - Transaction listeleri adres, hash, blok numarası, tutar, tarih aralığı gibi kriterlerle süzülebilir ve sayfalanabilir.
 
-### 🔸 Structured Logging (Serilog)
+### Structured Logging (Serilog)
 - Konsol ve dosya üzerinde structured log desteği.
 
 ---
 
-## ⚡ Uygulamayı Çalıştırmanın 2 Yolu
+##  Uygulamayı Çalıştırmanın 2 Yolu
 
 ### **1️⃣ Docker ile Hızlı Kurulum (Tavsiye Edilen Yol)**
 
@@ -52,7 +52,7 @@ bildirim kanallarına simülasyon bildirimleri gönderen modüler bir .NET uygul
    Proje ana dizinine (Dockerfile ve docker-compose.yml’nin olduğu klasör) gidin.
 
 4. **Aşağıdaki komutu çalıştırın:**
-    ```bash
+    ```terminalden
     docker-compose up
     ```
 
@@ -61,11 +61,11 @@ bildirim kanallarına simülasyon bildirimleri gönderen modüler bir .NET uygul
    - Hangfire Dashboard: [http://localhost:5000/hangfire](http://localhost:5000/hangfire)
 
 6. **Servisleri durdurmak için:**
-    ```bash
+    ```terminalden
     Ctrl + C
     ```
     veya yeni bir terminalde:
-    ```bash
+    ```
     docker-compose down
     ```
 
@@ -141,6 +141,4 @@ bildirim kanallarına simülasyon bildirimleri gönderen modüler bir .NET uygul
 
 ---
 
-> **Kurumsal, havalı ve kolay okunur bir README için yukarıdaki formatı aynen kullanabilirsin!  
-Başlıkları emojiyle güçlendirmek, kod bloklarını ve önemli noktaları vurgulamak profesyonel bir dokunuş katar.  
-Sorunsuz teslimat, net dökümantasyon ve büyük vizyon! 🚀**
+
