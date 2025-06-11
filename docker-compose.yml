@@ -9,7 +9,6 @@ services:
       - "5000:80"  # Hostta 5000, containerda 80
     environment:
       - ASPNETCORE_ENVIRONMENT=Test
-      - REDIS_CONNECTION=redis:6379   # Eğer kodda kullanıyorsan, bu şekilde env de geçilebilir
     depends_on:
       - redis
 
