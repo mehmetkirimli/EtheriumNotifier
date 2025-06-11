@@ -140,6 +140,29 @@ bildirim kanallarına simülasyon bildirimleri gönderen modüler bir .NET uygul
 
 ---
 
+## 🌐 Ortamlar & Konfigürasyonlar (Development & Test)
+
+Uygulama, farklı **çalışma ortamlarında** sorunsuz ve esnek çalışacak şekilde tasarlanmıştır.  
+Örneğin: `Development` (geliştirme) ve `Test` (test/QA) ortamları.
+
+---
+
+### ⚙️ Ortam Belirleme
+
+- Uygulamanın çalıştığı ortam, **`ASPNETCORE_ENVIRONMENT`** isimli **ortam değişkeni** ile kontrol edilir.
+- Bu değişkenin değeri baz alınarak, ilgili **`appsettings.{Environment}.json`** dosyası yüklenir ve uygulama ayarları buna göre şekillenir.
+
+---
+
+### 🐳 Docker’da Ortam Değişkeni Atama
+
+Docker Compose veya Dockerfile içinde ortam değişkeni şu şekilde ayarlanır:
+
+```yaml
+environment:
+  - ASPNETCORE_ENVIRONMENT=Test
+
+
 ## 📄 Notlar
 
 - Tüm temel ve ileri seviye özellikler, kurulum ve kullanım README’de detaylı olarak anlatılmıştır.
