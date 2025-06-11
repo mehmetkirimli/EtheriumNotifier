@@ -25,7 +25,7 @@ namespace Infrastructure
             //Services
             services.AddScoped<IEthereumService, EthereumService>();
             services.AddScoped<INotificationChannelService, NotificationChannelService>();
-            services.AddScoped<INotificationService,NotificationService>();
+            services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IWeb3Factory, Web3Factory>();
             services.AddScoped<ChannelSeeder>();
 
@@ -47,7 +47,6 @@ namespace Infrastructure
             var redis = ConnectionMultiplexer.Connect(options);
             services.AddSingleton<IConnectionMultiplexer>(redis);
             services.AddSingleton<IRedisService, RedisService>();
-
 
             // Hangfire
             services.AddHangfire(config =>

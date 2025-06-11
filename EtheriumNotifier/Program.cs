@@ -1,12 +1,15 @@
 using Application;
 using Application.Mapper;
 using Domain;
+using FluentValidation;
 using Hangfire;
 using Infrastructure;
 using Infrastructure.Services.HangFire;
 using Infrastructure.Services.Seed;
+using Infrastructure.Validator;
 using Persistence;
 using Serilog;
+
 
 
 var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
@@ -42,6 +45,9 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 
 //AutoMapper
 builder.Services.AddAutoMapper(typeof(Profiles).Assembly);
+
+// Existing code remains unchanged
+builder.Services.AddValidatorsFromAssemblyContaining<CreateNotificationChannelRequestDtoValidator>(); // Ensure the correct type is passed here
 
 // Controller  
 builder.Services.AddControllers();

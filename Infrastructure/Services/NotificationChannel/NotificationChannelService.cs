@@ -9,21 +9,28 @@ using Domain.Enums;
 using Domain.Entities;
 using Persistence.Repositories;
 using System.Runtime.InteropServices;
+using FluentValidation;
 
 namespace Infrastructure.Services.NotificationChannel
 {
     public class NotificationChannelService : INotificationChannelService
     {
         private readonly IRepository<Domain.Entities.NotificationChannel> _repository;
+        private readonly IValidator<CreateNotificationChannelRequestDto> _validator;
 
-        public NotificationChannelService(IRepository<Domain.Entities.NotificationChannel> repository)
+        public NotificationChannelService(IRepository<Domain.Entities.NotificationChannel> repository , IValidator<CreateNotificationChannelRequestDto> validator)
         {
             _repository = repository;
+            _validator = validator;
         }
 
         public async Task<Domain.Entities.NotificationChannel> AddNotificationChannelAsync(CreateNotificationChannelRequestDto dto)
         {
-            // Kullanıcı başına tek kanal constraint      
+            // Kullanıcı başına tek kanal constraint
+            var validationResult = await _validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+                throw new ValidationException(validationResult.Errors);
+
             var exists = (await _repository.GetFilteredAsync(x => x.UserId == dto.UserId && x.ChannelType == dto.ChannelType)).Any();
             if (exists)
                 throw new InvalidOperationException("Bu kullanıcı zaten bu tipte bir bildirim kanalı tanımlamış!");
@@ -45,6 +52,10 @@ namespace Infrastructure.Services.NotificationChannel
 
         public async Task<Domain.Entities.NotificationChannel> UpdateNotificationChannelAsync(CreateNotificationChannelRequestDto dto)
         {
+            var validationResult = await _validator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+                throw new ValidationException(validationResult.Errors);
+
             var entityList = await _repository.GetFilteredAsync(x => x.Id == dto.Id);
             var entity = entityList.FirstOrDefault();
 
