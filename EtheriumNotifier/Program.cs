@@ -77,10 +77,14 @@ app.UseHangfireDashboard("/hangfire" , new DashboardOptions
 HangfireJobRegistration.RegisterJobs();
 
 // Configure the HTTP request pipeline.  
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName=="Test")
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Etherium Notifier API V1");
+    });
+
 }
 
 app.UseHttpsRedirection();
