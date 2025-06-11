@@ -49,18 +49,25 @@ bildirim kanallarına simülasyon bildirimleri gönderen modüler bir .NET uygul
 2. **Docker Desktop uygulamasını başlatın.**
 
 3. **Terminal/Komut İstemcisi açın.**  
+   Eğer projeyi GitHub’dan ZIP indirip açıyorsanız veya clone alıp açıyorsanız, Docker imajını ilk seferde oluşturmanız gerekir.
    Proje ana dizinine (Dockerfile ve docker-compose.yml’nin olduğu klasör) gidin.
+   Bu işlem Dockerfile ve projenin kodlarını kullanarak imajı paketler.
+   
+5. **Aşağıdaki komutu çalıştırın: İmaj oluşturur**
+    ```terminalden
+    docker-compose build
+    ```
 
-4. **Aşağıdaki komutu çalıştırın:**
+6. **Aşağıdaki komutu çalıştırın: Oluşan İmajı çalıştırır**
     ```terminalden
     docker-compose up
     ```
 
-5. **Arayüzlere erişim:**
+7. **Arayüzlere erişim:**
    - Swagger: [http://localhost:5000/swagger](http://localhost:5000/swagger)
    - Hangfire Dashboard: [http://localhost:5000/hangfire](http://localhost:5000/hangfire)
 
-6. **Servisleri durdurmak için:**
+8. **Servisleri durdurmak için:**
     ```terminalden
     Ctrl + C
     ```
@@ -129,6 +136,7 @@ bildirim kanallarına simülasyon bildirimleri gönderen modüler bir .NET uygul
 - Serilog
 - Swagger
 - AutoMapper
+- FluentValidation
 
 ---
 
