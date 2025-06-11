@@ -61,7 +61,10 @@ using (var scope = app.Services.CreateScope())
 #endregion
 
 // Hangfire  
-app.UseHangfireDashboard("/hangfire");
+app.UseHangfireDashboard("/hangfire" , new DashboardOptions
+{
+    Authorization = new[] { new AllowAllDashboardAuthorizationFilter() } // Herkese izin ver
+});
 HangfireJobRegistration.RegisterJobs();
 
 // Configure the HTTP request pipeline.  
