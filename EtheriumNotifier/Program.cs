@@ -17,7 +17,12 @@ var options = new WebApplicationOptions
 };
 var builder = WebApplication.CreateBuilder(options);
 
-builder.WebHost.UseUrls("http://0.0.0.0:80");
+// Ortam Yapýlandýrma
+var environment = builder.Environment.EnvironmentName;
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true" || environment == "Test")
+{
+    builder.WebHost.UseUrls("http://0.0.0.0:80");
+}
 
 // Katman Servisleri  
 builder.Services.AddApplicationServices();
